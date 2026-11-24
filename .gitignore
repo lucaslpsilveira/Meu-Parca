@@ -1,0 +1,20 @@
+# --- Dados pessoais: NUNCA vão para o Git ---
+# Vozes reais, transcrições e personalidades de pessoas reais
+Audios/
+dataset/
+catalogo/
+personalidade/*
+!personalidade/exemplo.md
+!personalidade/exemplo_audios.json
+
+# Configuração local (host, caminhos) e instruções pessoais do Claude
+.env
+CLAUDE.local.md
+
+# Ambiente e temporários
+.venv/
+__pycache__/
+*.pyc
+*.log
+*.tmp
+.DS_Store

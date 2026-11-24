@@ -1,0 +1,12 @@
+{
+  "voz": "<voz>",
+  "regra": "Tocar no máximo 1 áudio a cada 6-8 respostas, nunca o mesmo duas vezes seguidas.",
+  "audios": [
+    {
+      "id": "exemplo_bordao",
+      "arquivo": "<voz>_001.wav",
+      "texto": "Transcrição do áudio.",
+      "quando": "Situação em que o assistente deve tocar este áudio."
+    }
+  ]
+}
