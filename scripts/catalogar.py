@@ -99,7 +99,9 @@ textarea{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:8p
 .t.on[data-t=tocar_original]{background:var(--acc);border-color:var(--acc);color:#fff}
 .t.on[data-t=ruim]{background:var(--ruim);border-color:var(--ruim);color:#222}
 .notas{margin-top:6px;min-height:34px;font-size:13px}
-.del{margin-left:auto;border:1px solid var(--line);background:transparent;color:#c0392b;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px}
+.ok{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--frase);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px}
+.ok.on{background:var(--frase);color:#fff;border-color:var(--frase)}
+.del{border:1px solid var(--line);background:transparent;color:#c0392b;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px}
 .del:hover{background:#c0392b;color:#fff;border-color:#c0392b}
 .ver{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px;color:var(--mut)}
 .v{border:1.5px solid var(--line);background:transparent;color:var(--fg);border-radius:8px;padding:3px 10px;cursor:pointer;font-size:13px}
@@ -108,15 +110,15 @@ textarea{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:8p
 </style></head><body>
 <header><h1>Catálogo de falas — <span id="voz"></span></h1>
 <div class="bar"><input id="q" placeholder="Buscar no texto…">
-<button class="f on" data-f="">Todos</button><button class="f" data-f="_sem">Sem tag</button>
+<button class="f on" data-f="_nao_avaliados">Não avaliados</button><button class="f" data-f="">Todos</button><button class="f" data-f="_sem">Sem tag</button>
 <button class="f" data-f="piada">Piadas</button><button class="f" data-f="bordao">Bordões</button>
 <button class="f" data-f="complemento">Complementos</button><button class="f" data-f="tocar_original">Tocar original</button><button class="f" data-f="_comparar">Comparar limpo</button>
 <span id="st"></span></div>
-<p class="ajuda"><b>Piada</b>: algo engraçado dele · <b>Bordão</b>: expressão que ele repete · <b>Complemento</b>: frase para o assistente usar de vez em quando · <b>Tocar original</b>: o assistente pode tocar este áudio real · <b>Ruim</b>: ruído/ininteligível, não usar (fica fora do treino). · <b>Treinar com</b>: ouça os dois players e escolha a versão que vai para o treino (padrão: original).</p>
+<p class="ajuda"><b>Piada</b>: algo engraçado dele · <b>Bordão</b>: expressão que ele repete · <b>Complemento</b>: frase para o assistente usar de vez em quando · <b>Tocar original</b>: o assistente pode tocar este áudio real · <b>Ruim</b>: ruído/ininteligível, não usar (fica fora do treino). · <b>✓ Avaliado</b>: tira a fala da lista "Não avaliados" quando terminar. · <b>Treinar com</b>: ouça os dois players e escolha a versão que vai para o treino (padrão: original).</p>
 </header><main id="lista"></main>
 <script>
 const TAGS=[["piada","Piada"],["bordao","Bordão"],["complemento","Complemento"],["tocar_original","Tocar original"],["ruim","Ruim"]];
-let cat,filtro="",timer;
+let cat,filtro="_nao_avaliados",timer;
 const st=document.getElementById("st");
 async function carregar(){cat=await (await fetch("api/catalogo")).json();document.getElementById("voz").textContent=cat.voz;render();}
 function salvar(){st.textContent="salvando…";clearTimeout(timer);timer=setTimeout(async()=>{
@@ -124,19 +126,23 @@ function salvar(){st.textContent="salvando…";clearTimeout(timer);timer=setTime
  st.textContent=r.ok?"salvo ✓":"ERRO ao salvar";resumo();},400);}
 function resumo(){const n=k=>cat.itens.filter(i=>i.tags.includes(k)).length;
  const sem=cat.itens.filter(i=>!i.tags.length).length;
- if(!st.textContent.startsWith("salvando"))st.textContent=`${cat.itens.length} falas · ${sem} sem tag · ${n("piada")} piadas · ${n("bordao")} bordões · ${cat.itens.filter(i=>i.versao==="limpo").length} limpos · ${cat.itens.filter(i=>i.limpo&&!i.versao).length} p/ comparar`;}
+ if(!st.textContent.startsWith("salvando"))st.textContent=`${cat.itens.length} falas · ${cat.itens.filter(i=>!i.avaliado).length} não avaliadas · ${sem} sem tag · ${n("piada")} piadas · ${n("bordao")} bordões · ${cat.itens.filter(i=>i.versao==="limpo").length} limpos · ${cat.itens.filter(i=>i.limpo&&!i.versao).length} p/ comparar`;}
 function render(){const q=document.getElementById("q").value.toLowerCase();const L=document.getElementById("lista");L.innerHTML="";
  cat.itens.forEach(it=>{
   if(q&&!(it.texto+" "+it.notas).toLowerCase().includes(q))return;
+  if(filtro==="_nao_avaliados"&&it.avaliado)return;
   if(filtro==="_sem"&&it.tags.length)return;
   if(filtro==="_comparar"&&!(it.limpo&&!it.versao))return;
   if(filtro&&filtro!=="_sem"&&!it.tags.includes(filtro))return;
   const c=document.createElement("div");c.className="c"+(it.tags.includes("ruim")?" ruim":"");
-  c.innerHTML=`<div class="top"><span class="nm"></span><span class="du">${it.duracao}s</span><audio controls preload="none" src="audio/${encodeURIComponent(it.arquivo)}"></audio>${it.limpo?`<span class="du">limpo:</span><audio controls preload="none" src="limpo/${encodeURIComponent(it.arquivo)}"></audio>`:""}<button class="del" title="Apaga do dataset (não é desta voz, ruído…)">Excluir</button></div>
+  c.innerHTML=`<div class="top"><span class="nm"></span><span class="du">${it.duracao}s</span><audio controls preload="none" src="audio/${encodeURIComponent(it.arquivo)}"></audio>${it.limpo?`<span class="du">limpo:</span><audio controls preload="none" src="limpo/${encodeURIComponent(it.arquivo)}"></audio>`:""}<button class="ok" title="Marca esta fala como avaliada">✓ Avaliado</button><button class="del" title="Apaga do dataset (não é desta voz, ruído…)">Excluir</button></div>
   <textarea rows="2"></textarea><div class="tags"></div>${it.limpo?`<div class="ver">Treinar com: <button class="v" data-v="original">Original</button><button class="v" data-v="limpo">Limpo</button><span class="vst"></span></div>`:""}<textarea class="notas" rows="1" placeholder="Notas (contexto da piada, quando usar…)"></textarea>`;
   c.querySelector(".nm").textContent=it.arquivo;
   const [tx,nt]=c.querySelectorAll("textarea");tx.value=it.texto;nt.value=it.notas||"";
   tx.oninput=()=>{it.texto=tx.value;salvar();};nt.oninput=()=>{it.notas=nt.value;salvar();};
+  const ok=c.querySelector(".ok");ok.classList.toggle("on",!!it.avaliado);
+  ok.onclick=()=>{it.avaliado=!it.avaliado;ok.classList.toggle("on",it.avaliado);salvar();
+   if(it.avaliado&&filtro==="_nao_avaliados"){c.style.transition="opacity .3s";c.style.opacity="0";setTimeout(()=>c.remove(),300);}};
   c.querySelector(".del").onclick=async()=>{
    const motivo=prompt(`Excluir ${it.arquivo} do dataset?\n"${it.texto.slice(0,80)}"\n\nMotivo (opcional), ex.: não é ${cat.voz}, ruído…`,"");
    if(motivo===null)return;
@@ -197,8 +203,12 @@ class H(BaseHTTPRequestHandler):
         # Uma aba antiga não pode ressuscitar áudios já removidos
         atual = ler_catalogo()
         dados["itens"] = [i for i in dados["itens"] if (DATASET / i["arquivo"]).is_file()]
+        marcados = {i["arquivo"]: i["avaliado"] for i in atual["itens"] if "avaliado" in i}
         for i in dados["itens"]:
             i.pop("limpo", None)
+            # Aba aberta antes do botão "Avaliado" existir não apaga a marcação
+            if "avaliado" not in i and i["arquivo"] in marcados:
+                i["avaliado"] = marcados[i["arquivo"]]
         dados["removidos"] = atual.get("removidos", [])
         gravar_catalogo(dados)
         self._send(200, b"ok", "text/plain")

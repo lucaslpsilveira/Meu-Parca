@@ -130,7 +130,9 @@ scripts/limpar.sh joao
 
 Usa o Demucs para separar a voz de ruído e música, gerando `dataset/joao_limpo/`. Os originais
 não são alterados. Compare no painel (filtro **Comparar limpo**) e escolha, em cada fala, qual
-versão usar. Em áudios de WhatsApp já limpos a diferença costuma ser pequena.
+versão usar. **Pule este passo se os áudios já são limpos** (gravações de WhatsApp em lugar
+silencioso): a diferença é quase nula e só custa tempo. Sem `dataset/joao_limpo/`, o painel esconde
+a comparação e o treino usa os originais.
 
 ### 5. Enviar e treinar
 
@@ -155,6 +157,19 @@ O guia completo de treino (épocas, problemas comuns, uso no Applio) está em
 > Para iniciar o treino remotamente sem ele morrer ao fechar o SSH, use uma tarefa agendada
 > interativa: `schtasks /create /tn Treino /tr "cmd /k C:\MeuParca\treinar.bat joao" /sc once /st 23:59 /it /f`
 > e depois `schtasks /run /tn Treino`.
+
+Acompanhar e testar, da estação de preparo:
+
+```bash
+scripts/status.sh joao                          # época atual, previsão de término, GPU
+scripts/testar.sh joao minha_gravacao.ogg        # sua voz → voz treinada (o mais natural)
+scripts/testar.sh joao "Fala, tudo certo?"       # texto (Edge TTS) → voz treinada
+TTS_VELOCIDADE=25 PITCH=-2 scripts/testar.sh joao "..."   # ajustes pontuais
+```
+
+O resultado vai para `testes/` em mp3 (`TESTE_FORMATO` no `.env`). Para tirar áudios de um
+modelo já treinado, exclua-os ou marque "ruim" no painel, rode `enviar.sh` e treine de novo:
+o RVC não "desaprende", o `treinar.bat` recomeça do zero e guarda o modelo anterior como backup.
 
 ### 6. Personalidade
 

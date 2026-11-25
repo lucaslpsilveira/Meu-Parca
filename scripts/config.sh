@@ -5,11 +5,12 @@ _carregar() {
   while IFS='=' read -r k v; do
     [[ -z "$k" || "$k" == \#* ]] && continue
     v="${v%\"}"; v="${v#\"}"
-    [ -n "${!k:-}" ] && [ "${2:-}" = "padrao" ] && continue   # variável de ambiente já definida vence
+    [[ " $_do_ambiente " == *" $k "* ]] && continue   # variável passada na linha de comando vence o .env
     export "$k=$v"
   done < "$1"
 }
-_carregar "$_raiz/.env.example" padrao
+_do_ambiente="$(compgen -e | tr '\n' ' ')"
+_carregar "$_raiz/.env.example"
 _carregar "$_raiz/.env"
 # Versão com barras invertidas para comandos do cmd.exe
 export WIN_DIR_BS="${WIN_DIR//\//\\}"

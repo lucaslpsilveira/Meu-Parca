@@ -3,6 +3,7 @@
 Audios/
 dataset/
 catalogo/
+testes/
 personalidade/*
 !personalidade/exemplo.md
 !personalidade/exemplo_audios.json
